@@ -53,15 +53,20 @@ fn run() -> Result<()> {
         match connection.recv_event() {
             Ok(event) => {
                 match event {
-                    Event::MessageCreate(ref message) if message.content == "!quit" => break,
+                    Event::MessageCreate(ref message) if message.content == "!kys" => break,
+                    Event::MessageCreate(ref message) if message.content == "!quit" => {
+                        let voice = connection.voice(Some(server_id));
+                        voice.stop();
+                        voice.disconnect();
+                    }
                     Event::MessageCreate(ref message) => {
                         for cap in play_regex.captures_iter(&message.content) {
                             let voice = connection.voice(Some(server_id));
                             voice.connect(voice_id);
                             println!("{}", &cap[1]);
-                            discord::voice::open_ytdl_stream(&cap[1]).map(|audio| {
-                                                                              voice.play(audio)
-                                                                          });
+                            discord::voice::open_ytdl_stream(&cap[1])
+                                .map(|audio| voice.play(audio))
+                                .ok();
                         }
                     }
                     _ => {}
@@ -70,6 +75,11 @@ fn run() -> Result<()> {
             _ => {}
         }
     }
+
+    connection.drop_voice(Some(server_id));
+
+    connection.shutdown()?;
+
 
 
     Ok(())
