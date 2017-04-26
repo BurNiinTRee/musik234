@@ -64,9 +64,11 @@ fn run() -> Result<()> {
                             let voice = connection.voice(Some(server_id));
                             voice.connect(voice_id);
                             println!("{}", &cap[1]);
-                            discord::voice::open_ytdl_stream(&cap[1])
-                                .map(|audio| voice.play(audio))
-                                .ok();
+                            match discord::voice::open_ytdl_stream(&cap[1])
+                                .map(|audio| voice.play(audio)) {
+                                    Ok(_) => {},
+                                    Err(e) => println!("{}", e),
+                                }
                         }
                     }
                     _ => {}
